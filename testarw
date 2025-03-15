@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test AI</title>
+</head>
+<body>
+    <h1>Test Gemini AI</h1>
+    <textarea id="user_message" placeholder="Enter your message here"></textarea><br><br>
+    <button onclick="sendRequest()">Send Request</button>
+
+    <h2>Response:</h2>
+    <pre id="response"></pre>
+
+    <script>
+        function sendRequest() {
+            const message = document.getElementById('user_message').value;
+            fetch('https://mobile-v3ai.onrender.com/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('response').innerText = 'Error occurred';
+            });
+        }
+    </script>
+</body>
+</html>
