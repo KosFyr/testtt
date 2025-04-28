@@ -1,37 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test AI</title>
+  <meta charset="UTF-8">
+  <title>Demo Παιχνιδιού - 2 Παίκτες</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    #raceTrack {
+      position: relative;
+      width: 90%;
+      height: 150px;
+      margin: 30px auto;
+      background: #eee;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .player {
+      position: absolute;
+      top: 30px;
+      font-size: 2rem;
+      transition: left 1s;
+    }
+
+    #p2 {
+      top: 90px;
+    }
+
+    input {
+      margin: 5px;
+      padding: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #stats {
+      margin-top: 20px;
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Test Gemini AI</h1>
-    <textarea id="user_message" placeholder="Enter your message here"></textarea><br><br>
-    <button onclick="sendRequest()">Send Request</button>
 
-    <h2>Response:</h2>
-    <pre id="response"></pre>
+<div id="start">
+  <h2>Εισάγετε Ονόματα Παικτών</h2>
+  <input id="player1" placeholder="Παίκτης 1">
+  <input id="player2" placeholder="Παίκτης 2">
+  <br>
+  <button onclick="startGame()">Ξεκίνα!</button>
+</div>
 
-    <script>
-        function sendRequest() {
-            const message = document.getElementById('user_message').value;
-            fetch('https://mobile-v3ai.onrender.com/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('response').innerText = 'Error occurred';
-            });
-        }
-    </script>
+<div id="game" style="display:none;">
+  <h2 id="turnInfo"></h2>
+
+  <div id="raceTrack">
+    <div id="p1" class="player">🏃‍♂️</div>
+    <div id="p2" class="player">🏃‍♀️</div>
+  </div>
+
+  <div>
+    <input id="pointsP1" type="number" placeholder="Βαθμοί Παίκτη 1">
+    <input id="pointsP2" type="number" placeholder="Βαθμοί Παίκτη 2">
+  </div>
+  <button onclick="nextTurn()">Επόμενος Γύρος</button>
+
+  <div id="stats"></div>
+</div>
+
+<script>
+  let playerNames = [];
+  let playerPoints = [0, 0];
+  let playerPositions = [0, 0];
+
+  function startGame() {
+    playerNames[0] = document.getElementById('player1').value || 'Παίκτης 1';
+    playerNames[1] = document.getElementById('player2').value || 'Παίκτης 2';
+
+    document.getElementById('start').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+
+    updateTurnInfo();
+  }
+
+  function updateTurnInfo() {
+    document.getElementById('turnInfo').innerText = `Γύρος: Δώστε βαθμούς για τους παίκτες!`;
+  }
+
+  function nextTurn() {
+    let points1 = parseInt(document.getElementById('pointsP1').value) || 0;
+    let points2 = parseInt(document.getElementById('pointsP2').value) || 0;
+
+    playerPoints[0] += points1;
+    playerPoints[1] += points2;
+
+    playerPositions[0] += points1 * 10; // κάθε βαθμός = 10px κίνηση
+    playerPositions[1] += points2 * 10;
+
+    document.getElementById('p1').style.left = playerPositions[0] + 'px';
+    document.getElementById('p2').style.left = playerPositions[1] + 'px';
+
+    updateStats();
+    resetInputs();
+  }
+
+  function updateStats() {
+    document.getElementById('stats').innerHTML = `
+      <p><strong>${playerNames[0]}</strong>: ${playerPoints[0]} βαθμοί</p>
+      <p><strong>${playerNames[1]}</strong>: ${playerPoints[1]} βαθμοί</p>
+    `;
+  }
+
+  function resetInputs() {
+    document.getElementById('pointsP1').value = '';
+    document.getElementById('pointsP2').value = '';
+  }
+</script>
+
 </body>
 </html>
