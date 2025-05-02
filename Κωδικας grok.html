@@ -1,0 +1,465 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Παιχνίδι Προγραμματισμού</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', Arial, sans-serif;
+      background-color: #e0f7fa;
+      margin: 0;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 1024px;
+      padding: 20px;
+      margin: 10px auto; /* Μειωμένο περιθώριο από 40px σε 10px */
+    }
+
+    .hidden {
+      display: none;
+      opacity: 0;
+    }
+
+    .visible {
+      display: block;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .btn {
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Home Screen */
+    #home-screen h1 {
+      font-size: 48px;
+      color: #0288d1;
+    }
+
+    #home-screen .btn {
+      background-color: #f57c00;
+    }
+
+    #home-screen .btn:hover {
+      background-color: #ef6c00;
+    }
+
+    /* Avatar Selection Screen */
+    #avatar-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .avatar-container {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 60px;
+      border-radius: 50%;
+      border: 3px solid #333;
+      background-color: #fff;
+    }
+
+    .avatar:hover {
+      transform: scale(1.1);
+    }
+
+    .avatar-bito::before { content: '🧑‍🎓'; }
+    .avatar-byte::before { content: '👧'; }
+    .avatar-bugsy::before { content: '🤖'; }
+
+    #player-name {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 5px;
+      border: 2px solid #0288d1;
+    }
+
+    #avatar-screen .btn {
+      background-color: #f57c00;
+    }
+
+    #avatar-screen .btn:hover {
+      background-color: #ef6c00;
+    }
+
+    /* Game Screen */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 100px);
+      gap: 10px;
+      margin: 20px auto;
+      background-color: #a5d6a7;
+      padding: 20px;
+      border-radius: 10px;
+      position: relative;
+      width: 540px;
+      height: 340px;
+    }
+
+    .square {
+      width: 100px;
+      height: 100px;
+      background-color: #81c784;
+      border: 2px solid #388e3c;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      color: #fff;
+      position: absolute;
+      transition: all 0.5s ease;
+    }
+
+    .player {
+      width: 50px;
+      height: 50px;
+      position: absolute;
+      transition: all 0.5s ease;
+      font-size: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background-color: #fff;
+      border: 2px solid #333;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .bounce {
+      animation: bounce 0.3s ease;
+    }
+
+    #question {
+      font-size: 24px;
+      margin: 20px 0;
+      color: #0288d1;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    #question-type {
+      font-size: 18px;
+      color: #d81b60;
+      margin-bottom: 10px;
+    }
+
+    .options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .option-true { background-color: #4caf50; }
+    .option-true:hover { background-color: #45a049; }
+    .option-false { background-color: #d32f2f; }
+    .option-false:hover { background-color: #c62828; }
+    .option-dropdown {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 2px solid #0288d1;
+      width: 300px;
+    }
+
+    #options .btn { background-color: #0288d1; }
+    #options .btn:hover { background-color: #0277bd; }
+    #feedback { font-size: 20px; margin: 10px 0; color: #d81b60; }
+    #score { font-size: 18px; color: #388e3c; }
+
+    /* End Screen */
+    #end-screen h2 {
+      font-size: 36px;
+      color: #d81b60;
+    }
+
+    #end-score {
+      font-size: 24px;
+      color: #0288d1;
+    }
+
+    #end-screen .replay { background-color: #2e7d32; }
+    #end-screen .replay:hover { background-color: #27632a; }
+    #end-screen .home { background-color: #0288d1; }
+    #end-screen .home:hover { background-color: #0277bd; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Home Screen -->
+    <div id="home-screen" class="visible">
+      <h1>Παιχνίδι Προγραμματισμού</h1>
+      <button class="btn" onclick="showScreen('avatar-screen')">Έναρξη Παιχνιδιού</button>
+    </div>
+
+    <!-- Avatar Selection Screen -->
+    <div id="avatar-screen" class="hidden">
+      <h2>Επιλογή Avatar</h2>
+      <div class="avatar-container">
+        <div class="avatar avatar-bito" onclick="selectAvatar('bito')"></div>
+        <div class="avatar avatar-byte" onclick="selectAvatar('byte')"></div>
+        <div class="avatar avatar-bugsy" onclick="selectAvatar('bugsy')"></div>
+      </div>
+      <input type="text" id="player-name" placeholder="Εισάγετε όνομα (προαιρετικό)" aria-label="Όνομα παίκτη">
+      <button class="btn" onclick="startGame()">Ξεκίνα</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden">
+      <div class="board" id="board"></div>
+      <div id="question-type"></div>
+      <div id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="feedback"></div>
+      <div id="score"></div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="hidden">
+      <h2 id="end-message"></h2>
+      <div id="end-score"></div>
+      <button class="btn replay" onclick="showScreen('avatar-screen')">Ξαναπαίξε</button>
+      <button class="btn home" onclick="showScreen('home-screen')">Αρχική</button>
+    </div>
+  </div>
+
+  <script>
+    const screens = ['home-screen', 'avatar-screen', 'game-screen', 'end-screen'];
+    let selectedAvatar = '';
+    let playerName = '';
+    let currentPosition = 1;
+    let correctAnswers = 0;
+    const usedQuestions = new Set();
+
+    const questions = [
+      { type: 'true-false', question: 'Το αντικείμενο πρόγραμμα παράγεται από τον μεταγλωττιστή.', correct: true },
+      { type: 'true-false', question: 'Σε ένα δυαδικό δένδρο κάθε κόμβος έχει 0, 1 ή 2 υποδένδρα.', correct: true },
+      { type: 'true-false', question: 'Η ενθυλάκωση υποδηλώνει ότι οι εσωτερικές λειτουργίες ενός αντικειμένου είναι ορατές στον έξω κόσμο.', correct: false },
+      { type: 'true-false', question: 'Η ώθηση ενός στοιχείου γίνεται στην κορυφή της στοίβας.', correct: true },
+      { type: 'true-false', question: 'Το όχημα είναι υποκλάση του αυτοκινήτου.', correct: false },
+      { type: 'matching', question: 'Παράλειψη δήλωσης μεταβλητής', options: ['Συντακτικό Λάθος', 'Λάθος κατά την εκτέλεση', 'Λογικό Λάθος'], correct: 'Συντακτικό Λάθος' },
+      { type: 'matching', question: 'Εξαγωγή λανθασμένου αποτελέσματος', options: ['Συντακτικό Λάθος', 'Λάθος κατά την εκτέλεση', 'Λογικό Λάθος'], correct: 'Λογικό Λάθος' },
+      { type: 'matching', question: 'Διαίρεση με το μηδέν (0)', options: ['Συντακτικό Λάθος', 'Λάθος κατά την εκτέλεση', 'Λογικό Λάθος'], correct: 'Λάθος κατά την εκτέλεση' },
+      { type: 'matching', question: 'Καταχώριση από τον χρήστη γράμματος σε ακέραια μεταβλητή', options: ['Συντακτικό Λάθος', 'Λάθος κατά την εκτέλεση', 'Λογικό Λάθος'], correct: 'Λάθος κατά την εκτέλεση' },
+      { type: 'matching', question: 'Όνομα μεταβλητής: 3Α', options: ['Συντακτικό Λάθος', 'Λάθος κατά την εκτέλεση', 'Λογικό Λάθος'], correct: 'Συντακτικό Λάθος' }
+    ];
+
+    const generateBoardPositions = () => {
+      const rows = 3, cols = 5, squareSize = 100, padding = 20;
+      let positions = [];
+      let index = 0;
+      for (let row = rows - 1; row >= 0; row--) {
+        for (let col = 0; col < cols; col++) {
+          positions.push({ x: col * squareSize + padding, y: row * squareSize + padding });
+          index++;
+          if (index === 15) break;
+        }
+      }
+      return positions;
+    };
+
+    const boardPositions = generateBoardPositions();
+
+    function showScreen(screenId) {
+      screens.forEach(screen => {
+        const el = document.getElementById(screen);
+        el.classList.toggle('visible', screen === screenId);
+        el.classList.toggle('hidden', screen !== screenId);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectAvatar(avatar) {
+      selectedAvatar = avatar;
+      document.querySelectorAll('.avatar').forEach(el => el.style.border = '3px solid #333');
+      document.querySelector(`.avatar-${avatar}`).style.border = '3px solid #d81b60';
+    }
+
+    function startGame() {
+      if (!selectedAvatar) {
+        alert('Παρακαλώ επιλέξτε ένα avatar!');
+        return;
+      }
+      playerName = document.getElementById('player-name').value || 'Παίκτης';
+      currentPosition = 1;
+      correctAnswers = 0;
+      usedQuestions.clear();
+      showScreen('game-screen');
+      setupBoard();
+      loadQuestion();
+    }
+
+    function setupBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      boardPositions.forEach((pos, index) => {
+        const square = document.createElement('div');
+        square.className = 'square';
+        square.textContent = index + 1;
+        square.style.left = `${pos.x}px`;
+        square.style.top = `${pos.y}px`;
+        square.style.backgroundColor = index % 2 === 0 ? '#81c784' : '#66bb6a';
+        board.appendChild(square);
+      });
+      const player = document.createElement('div');
+      player.className = `player avatar-${selectedAvatar}`;
+      player.style.left = `${boardPositions[0].x + 25}px`;
+      player.style.top = `${boardPositions[0].y + 25}px`;
+      board.appendChild(player);
+    }
+
+    function loadQuestion() {
+      if (usedQuestions.size >= questions.length || currentPosition >= 15) {
+        endGame();
+        return;
+      }
+
+      const availableQuestions = questions
+        .map((q, i) => ({ q, i }))
+        .filter(({ i }) => !usedQuestions.has(i));
+      const { q: question, i: questionIndex } = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+      usedQuestions.add(questionIndex);
+
+      document.getElementById('question-type').textContent = question.type === 'true-false' ? 'Σωστό/Λάθος' : 'Αντιστοίχιση';
+      document.getElementById('question').textContent = question.question;
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = '';
+
+      if (question.type === 'true-false') {
+        optionsDiv.innerHTML = `
+          <button class="btn option-true" onclick="checkAnswer(true, ${questionIndex})">Σωστό</button>
+          <button class="btn option-false" onclick="checkAnswer(false, ${questionIndex})">Λάθος</button>
+        `;
+      } else {
+        const select = document.createElement('select');
+        select.className = 'option-dropdown';
+        select.innerHTML = '<option value="">Επιλέξτε...</option>' + 
+          question.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+        optionsDiv.appendChild(select);
+        const submitButton = document.createElement('button');
+        submitButton.className = 'btn';
+        submitButton.textContent = 'Υποβολή';
+        submitButton.onclick = () => checkAnswer(select.value, questionIndex);
+        optionsDiv.appendChild(submitButton);
+      }
+
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('score').textContent = `Θέση: ${currentPosition} από 15 | Σωστές: ${correctAnswers}`;
+    }
+
+    function checkAnswer(selected, questionIndex) {
+      const question = questions[questionIndex];
+      const isCorrect = question.type === 'true-false' ? selected === question.correct : selected === question.correct;
+
+      document.getElementById('feedback').textContent = isCorrect ? 'Σωστά!' : 'Λάθος';
+      if (isCorrect) {
+        correctAnswers++;
+        currentPosition += 2;
+      }
+
+      movePlayer();
+    }
+
+    function movePlayer() {
+      if (currentPosition >= 15 || usedQuestions.size >= questions.length) {
+        endGame();
+        return;
+      }
+
+      const player = document.querySelector('.player');
+      player.classList.add('bounce');
+      requestAnimationFrame(() => {
+        player.style.left = `${boardPositions[currentPosition - 1].x + 25}px`;
+        player.style.top = `${boardPositions[currentPosition - 1].y + 25}px`;
+        player.classList.remove('bounce');
+        setTimeout(loadQuestion, 500);
+      });
+    }
+
+    function endGame() {
+      showScreen('end-screen');
+      document.getElementById('end-message').textContent = currentPosition >= 15
+        ? 'Μπράβο! Ολοκλήρωσες το Παιχνίδι!'
+        : 'Μπορείς και καλύτερα, δοκίμασε ξανά!';
+      document.getElementById('end-score').textContent = `Συνολικές Σωστές Απαντήσεις: ${correctAnswers}`;
+    }
+  </script>
+</body>
+</html>
