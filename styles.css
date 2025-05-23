@@ -1,0 +1,264 @@
+body {
+  font-family: 'Comic Sans MS', Arial, sans-serif;
+  background-color: #e0f7fa;
+  margin: 0;
+  color: #333;
+  overflow-x: hidden;
+}
+
+.container {
+  text-align: center;
+  max-width: 1024px;
+  padding: 20px;
+  margin: 10px auto;
+}
+
+.hidden {
+  display: none;
+  opacity: 0;
+}
+
+.visible {
+  display: block;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.btn {
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  margin: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Home Screen */
+#home-screen h1 {
+  font-size: 48px;
+  color: #0288d1;
+}
+
+#home-screen .btn {
+  background-color: #f57c00;
+}
+
+#home-screen .btn:hover {
+  background-color: #ef6c00;
+}
+
+/* Avatar Selection Screen */
+#avatar-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-container {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 60px;
+  border-radius: 50%;
+  border: 3px solid #333;
+  background-color: #fff;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.avatar-bito::before { content: '🧑‍🎓'; }
+.avatar-byte::before { content: '👧'; }
+.avatar-bugsy::before { content: '🤖'; }
+
+#player-name {
+  padding: 10px;
+  font-size: 16px;
+  margin: 10px;
+  border-radius: 5px;
+  border: 2px solid #0288d1;
+}
+
+#avatar-screen .btn {
+  background-color: #f57c00;
+}
+
+#avatar-screen .btn:hover {
+  background-color: #ef6c00;
+}
+
+/* Game Screen */
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 100px);
+  gap: 10px;
+  margin: 20px auto;
+  background-color: #a5d6a7;
+  padding: 20px;
+  border-radius: 10px;
+  position: relative;
+  width: 540px;
+  height: 340px;
+}
+
+.square {
+  width: 100px;
+  height: 100px;
+  background-color: #81c784;
+  border: 2px solid #388e3c;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  color: #fff;
+  position: absolute;
+  transition: all 0.5s ease;
+}
+
+.player {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  transition: all 0.5s ease;
+  font-size: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background-color: #fff;
+  border: 2px solid #333;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.bounce {
+  animation: bounce 0.3s ease;
+}
+
+#question {
+  font-size: 24px;
+  margin: 20px 0;
+  color: #0288d1;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+#question-type {
+  font-size: 18px;
+  color: #d81b60;
+  margin-bottom: 10px;
+}
+
+.options {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.option-true { background-color: #4caf50; }
+.option-true:hover { background-color: #45a049; }
+.option-false { background-color: #d32f2f; }
+.option-false:hover { background-color: #c62828; }
+.option-dropdown {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 2px solid #0288d1;
+  width: 300px;
+}
+
+#options .btn { background-color: #0288d1; }
+#options .btn:hover { background-color: #0277bd; }
+#feedback { font-size: 20px; margin: 10px 0; color: #d81b60; }
+#score { font-size: 18px; color: #388e3c; }
+
+/* End Screen */
+#end-screen h2 {
+  font-size: 36px;
+  color: #d81b60;
+}
+
+#end-score {
+  font-size: 24px;
+  color: #0288d1;
+}
+
+#end-screen .replay { background-color: #2e7d32; }
+#end-screen .replay:hover { background-color: #27632a; }
+#end-screen .home { background-color: #0288d1; }
+#end-screen .home:hover { background-color: #0277bd; }
+
+/* Kick Animation */
+#bot-kick {
+  pointer-events: none;
+  position: absolute;
+  font-size: 40px;
+  z-index: 10;
+  opacity: 0;
+}
+
+#bot-kick.kick {
+  opacity: 1;
+  animation: boot-kick-move 0.6s cubic-bezier(.36,1.5,.64,1) 1;
+}
+
+@keyframes boot-kick-move {
+  0% {
+    transform: translateX(120px) scaleX(-1) scale(1.2); /* εκτός board δεξιά, καθρεφτισμένο */
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  40% {
+    transform: translateX(20px) scaleX(-1) scale(1.1); /* πλησιάζει τον παίκτη */
+    opacity: 1;
+  }
+  60% {
+    transform: translateX(-10px) scaleX(-1) scale(1.1); /* "χτυπάει" τον παίκτη */
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-80px) scaleX(-1) scale(0.9); /* φεύγει αριστερά */
+    opacity: 0;
+  }
+}
+
+.player.kick {
+  animation: kick-bounce 0.4s cubic-bezier(.36,1.5,.64,1) 1;
+  z-index: 9;
+}
+
+@keyframes kick-bounce {
+  0% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-10px) scale(1.1); }
+  40% { transform: translateX(20px) scale(1.2); }
+  60% { transform: translateX(-10px) scale(0.9); }
+  100% { transform: translateY(0) scale(1); }
+}

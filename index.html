@@ -1,0 +1,92 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!-- index.html -->
+<xaiArtifact artifact_id="c483a128-7ce4-4c60-abeb-35d4b5637d2b" artifact_version_id="12547deb-7457-4090-987d-ee902e008dd8" title="index.html" contentType="text/html">
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Παιχνίδι Προγραμματισμού</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Home Screen -->
+    <div id="home-screen" class="visible">
+      <h1>Παιχνίδι Προγραμματισμού</h1>
+      <button class="btn" onclick="showScreen('avatar-screen')">Έναρξη Παιχνιδιού</button>
+    </div>
+
+    <!-- Avatar Selection Screen -->
+    <div id="avatar-screen" class="hidden">
+      <h2>Επιλογή Avatar</h2>
+      <div class="avatar-container">
+        <div class="avatar avatar-bito" onclick="selectAvatar('bito')"></div>
+        <div class="avatar avatar-byte" onclick="selectAvatar('byte')"></div>
+        <div class="avatar avatar-bugsy" onclick="selectAvatar('bugsy')"></div>
+      </div>
+      <input type="text" id="player-name" placeholder="Εισάγετε όνομα (προαιρετικό)" aria-label="Όνομα παίκτη">
+      <button class="btn" onclick="startGame()">Ξεκίνα</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden">
+      <div class="board" id="board"></div>
+      <div id="question-type"></div>
+      <div id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="feedback"></div>
+      <div id="score"></div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="hidden">
+      <h2 id="end-message"></h2>
+      <div id="end-score"></div>
+      <button class="btn replay" onclick="showScreen('avatar-screen')">Ξαναπαίξε</button>
+      <button class="btn home" onclick="showScreen('home-screen')">Αρχική</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
